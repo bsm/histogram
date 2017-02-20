@@ -1,6 +1,6 @@
 # Histogram
 
-[![Build Status](https://travis-ci.org/grpc/grpc-go.svg)](https://travis-ci.org/grpc/grpc-go) [![GoDoc](https://godoc.org/google.golang.org/grpc?status.svg)](https://godoc.org/google.golang.org/grpc)
+[![Build Status](https://travis-ci.org/bsm/histogram.svg)](https://travis-ci.org/bsm/histogram) [![GoDoc](https://godoc.org/github.com/bsm/histogram?status.svg)](https://godoc.org/github.com/bsm/histogram)
 
 Fast Go implementation of Ben-Haim's and Yom-Tov's streaming histogram algorithm, as described in their *A Streaming Parallel Decision Tree Algorithm*
 (2010, [PDF](http://jmlr.org/papers/volume11/ben-haim10a/ben-haim10a.pdf)) paper.
