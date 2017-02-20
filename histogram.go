@@ -54,8 +54,14 @@ func (h *Histogram) Copy(x *Histogram) *Histogram {
 	if x == nil {
 		x = new(Histogram)
 	}
-	x.Reset(h.size)
+	if sz := h.size; sz < cap(x.bins) {
+		x.bins = x.bins[:len(h.bins)]
+	} else {
+		x.bins = make([]bin, len(h.bins), sz+1)
+	}
 	copy(x.bins, h.bins)
+
+	x.size = h.size
 	x.min = h.min
 	x.max = h.max
 	x.cnt = h.cnt

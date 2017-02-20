@@ -85,6 +85,16 @@ var _ = Describe("Histogram", func() {
 		Expect(std.Min()).To(Equal(float64(6)))
 	})
 
+	It("should copy", func() {
+		c1 := std.Copy(nil)
+		Expect(c1).To(Equal(std))
+
+		t2 := seed(1, 2, 3, 4)
+		c2 := std.Copy(t2)
+		Expect(c2).To(Equal(std))
+		Expect(c2).To(Equal(t2))
+	})
+
 	It("should calc max", func() {
 		Expect(math.IsNaN(blnk.Max())).To(BeTrue())
 		Expect(std.Max()).To(Equal(float64(49)))
