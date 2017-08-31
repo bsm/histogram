@@ -6,7 +6,7 @@ import (
 	"github.com/bsm/histogram"
 )
 
-func ExampleHistorgram() {
+func ExampleHistogram() {
 	// Create a new instance
 	h := histogram.New(16)
 

@@ -100,6 +100,16 @@ var _ = Describe("Histogram", func() {
 		Expect(std.Max()).To(Equal(float64(49)))
 	})
 
+	It("should merge", func() {
+		h2 := seed(11, 2, 3, 14, 7, 4)
+		Expect(h2.Sum()).To(Equal(41.0))
+		Expect(h2.bins).To(HaveLen(4))
+
+		h2.MergeWith(std)
+		Expect(h2.Sum()).To(Equal(407.0))
+		Expect(h2.bins).To(HaveLen(4))
+	})
+
 	It("should add", func() {
 		Expect(std.bins).To(HaveLen(4))
 		Expect(std.bins).To(HaveCap(5))
