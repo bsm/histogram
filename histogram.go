@@ -5,13 +5,6 @@ import (
 	"sort"
 )
 
-type bin struct {
-	w float64 // weight
-	v float64 // value
-}
-
-func (b bin) Sum() float64 { return math.Abs(b.w) * b.v }
-
 // Histogram is a probabilistic, fixed-size data structure, able to
 // accommodate massive data streams while predicting distributions
 // and quantiles much more accurately than a sample-based approach.
@@ -179,6 +172,17 @@ func (h *Histogram) AddN(v float64, n int) {
 	h.prune()
 }
 
+// Merge sets h to the union x ∪ y.
+func (h *Histogram) Merge(x, y *Histogram) {
+	h.bins = append(h.bins[:0], x.bins...)
+	h.bins = append(h.bins, y.bins...)
+	sort.Sort(binSlice(h.bins))
+	h.prune()
+}
+
+// MergeWith sets h to the union h ∪ x.
+func (h *Histogram) MergeWith(x *Histogram) { h.Merge(h, x) }
+
 func (h *Histogram) solve(b1, b2 bin, delta float64) float64 {
 	w1, w2 := b1.w, b2.w
 
@@ -219,25 +223,23 @@ func (h *Histogram) insert(v float64, n int) {
 }
 
 func (h *Histogram) prune() {
-	if len(h.bins) <= h.size {
-		return
-	}
-
-	delta := math.MaxFloat64
-	pos := 0
-	for i := 0; i < len(h.bins)-1; i++ {
-		b1, b2 := h.bins[i], h.bins[i+1]
-		if x := b2.v - b1.v; x < delta {
-			pos, delta = i, x
+	for len(h.bins) > h.size {
+		delta := math.MaxFloat64
+		pos := 0
+		for i := 0; i < len(h.bins)-1; i++ {
+			b1, b2 := h.bins[i], h.bins[i+1]
+			if x := b2.v - b1.v; x < delta {
+				pos, delta = i, x
+			}
 		}
-	}
 
-	b1, b2 := h.bins[pos], h.bins[pos+1]
-	w := math.Abs(b1.w) + math.Abs(b2.w)
-	v := (b1.Sum() + b2.Sum()) / w
-	h.bins[pos+1].w = -w
-	h.bins[pos+1].v = v
-	h.bins = h.bins[:pos+copy(h.bins[pos:], h.bins[pos+1:])]
+		b1, b2 := h.bins[pos], h.bins[pos+1]
+		w := math.Abs(b1.w) + math.Abs(b2.w)
+		v := (b1.Sum() + b2.Sum()) / w
+		h.bins[pos+1].w = -w
+		h.bins[pos+1].v = v
+		h.bins = h.bins[:pos+copy(h.bins[pos:], h.bins[pos+1:])]
+	}
 }
 
 func (h *Histogram) search(v float64) int {
