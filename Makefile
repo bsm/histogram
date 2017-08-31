@@ -1,4 +1,4 @@
-PKG=$(shell go list | grep -v 'vendor')
+PKG=$(shell go list ./... | grep -v 'vendor')
 
 default: vet test
 
