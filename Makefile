@@ -1,12 +1,10 @@
-PKG=$(shell go list ./... | grep -v 'vendor')
-
 default: vet test
 
 vet:
-	go vet $(PKG)
+	go vet ./...
 
 test:
-	go test $(PKG)
+	go test ./...
 
 bench:
-	go test $(PKG) -run=NONE -bench=. -benchmem
+	go test ./... -run=NONE -bench=. -benchmem
