@@ -12,9 +12,9 @@ import (
 // Please note that a historgram is not thread-safe. All operations
 // must be protected by a mutex if used across multiple goroutines.
 type Histogram struct {
-	bins []bin
-	size int
-	cnt  int
+	bins   []bin
+	size   int
+	weight float64
 
 	min, max float64
 }
@@ -38,7 +38,7 @@ func (h *Histogram) Reset(sz int) {
 	h.size = sz
 	h.min = math.NaN()
 	h.max = math.NaN()
-	h.cnt = 0
+	h.weight = 0
 }
 
 // Copy copies h to x and returns x. If x is passed as nil
@@ -57,17 +57,17 @@ func (h *Histogram) Copy(x *Histogram) *Histogram {
 	x.size = h.size
 	x.min = h.min
 	x.max = h.max
-	x.cnt = h.cnt
+	x.weight = h.weight
 	return x
 }
 
-// Count returns the number of observations
-func (h *Histogram) Count() int { return h.cnt }
+// Weight returns the observed weight (usually, the number of items seen).
+func (h *Histogram) Weight() float64 { return h.weight }
 
-// Min returns the smallest observed value
+// Min returns the smallest observed value.
 // Returns NaN if Count is zero.
 func (h *Histogram) Min() float64 {
-	if h.cnt == 0 {
+	if h.weight == 0 {
 		return math.NaN()
 	}
 	return h.min
@@ -76,7 +76,7 @@ func (h *Histogram) Min() float64 {
 // Max returns the largest observed value.
 // Returns NaN if Count is zero.
 func (h *Histogram) Max() float64 {
-	if h.cnt == 0 {
+	if h.weight == 0 {
 		return math.NaN()
 	}
 	return h.max
@@ -85,7 +85,7 @@ func (h *Histogram) Max() float64 {
 // Sum returns the (approximate) sum of all observed values.
 // Returns NaN if Count is zero.
 func (h *Histogram) Sum() float64 {
-	if h.cnt == 0 {
+	if h.weight == 0 {
 		return math.NaN()
 	}
 
@@ -99,16 +99,16 @@ func (h *Histogram) Sum() float64 {
 // Mean returns the (approximate) average observed value.
 // Returns NaN if Count is zero.
 func (h *Histogram) Mean() float64 {
-	if h.cnt == 0 {
+	if h.weight == 0 {
 		return math.NaN()
 	}
-	return h.Sum() / float64(h.cnt)
+	return h.Sum() / h.weight
 }
 
-// Variance returns the (approximate) variance of the distribution.
+// Variance returns the (approximate) sample variance of the distribution.
 // Returns NaN if Count is zero.
 func (h *Histogram) Variance() float64 {
-	if h.cnt == 0 {
+	if h.weight <= 1 {
 		return math.NaN()
 	}
 
@@ -118,14 +118,14 @@ func (h *Histogram) Variance() float64 {
 		delta := mean - b.v
 		vv += delta * delta * b.w
 	}
-	return vv / float64(h.cnt)
+	return vv / (h.weight - 1)
 }
 
 // Quantile returns the (approximate) quantile of the distribution.
 // Accepted values for q are between 0.0 and 1.0.
 // Returns NaN if Count is zero or bad inputs.
 func (h *Histogram) Quantile(q float64) float64 {
-	if h.cnt == 0 || q < 0.0 || q > 1.0 {
+	if h.weight == 0 || q < 0.0 || q > 1.0 {
 		return math.NaN()
 	} else if q == 0.0 {
 		return h.min
@@ -133,7 +133,7 @@ func (h *Histogram) Quantile(q float64) float64 {
 		return h.max
 	}
 
-	delta := q * float64(h.cnt)
+	delta := q * h.weight
 	pos := 0
 	for w0 := 0.0; pos < len(h.bins); pos++ {
 		w1 := math.Abs(h.bins[pos].w) / 2.0
@@ -154,20 +154,23 @@ func (h *Histogram) Quantile(q float64) float64 {
 	}
 }
 
-// Add is the same as AddN(v, 1)
-func (h *Histogram) Add(v float64) { h.AddN(v, 1) }
+// Add is the same as AddWeight(v, 1)
+func (h *Histogram) Add(v float64) { h.AddWeight(v, 1) }
 
-// AddN adds n observations of v to the distribution
-func (h *Histogram) AddN(v float64, n int) {
-	if h.cnt == 0 || v < h.min {
+// AddWeight adds observations of v with the weight w to the distribution.
+func (h *Histogram) AddWeight(v, w float64) {
+	if w <= 0 {
+		return
+	}
+	if h.weight == 0 || v < h.min {
 		h.min = v
 	}
-	if h.cnt == 0 || v > h.max {
+	if h.weight == 0 || v > h.max {
 		h.max = v
 	}
 
-	h.insert(v, n)
-	h.cnt += n
+	h.insert(v, w)
+	h.weight += w
 
 	h.prune()
 }
@@ -206,10 +209,10 @@ func (h *Histogram) solve(b1, b2 bin, delta float64) float64 {
 	return b1.v + (b2.v-b1.v)*z
 }
 
-func (h *Histogram) insert(v float64, n int) {
+func (h *Histogram) insert(v, w float64) {
 	pos := h.search(v)
 	if pos < len(h.bins) && h.bins[pos].v == v {
-		h.bins[pos].w += math.Copysign(float64(n), h.bins[pos].w)
+		h.bins[pos].w += w
 		return
 	}
 
@@ -218,7 +221,7 @@ func (h *Histogram) insert(v float64, n int) {
 	if pos != maxi {
 		copy(h.bins[pos+1:], h.bins[pos:])
 	}
-	h.bins[pos].w = float64(n)
+	h.bins[pos].w = w
 	h.bins[pos].v = v
 }
 
