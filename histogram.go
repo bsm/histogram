@@ -212,7 +212,7 @@ func (h *Histogram) solve(b1, b2 bin, delta float64) float64 {
 func (h *Histogram) insert(v, w float64) {
 	pos := h.search(v)
 	if pos < len(h.bins) && h.bins[pos].v == v {
-		h.bins[pos].w += w
+		h.bins[pos].w += math.Copysign(w, h.bins[pos].w)
 		return
 	}
 
