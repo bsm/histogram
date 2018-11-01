@@ -61,6 +61,9 @@ func (h *Histogram) Copy(x *Histogram) *Histogram {
 	return x
 }
 
+// Count returns the observed weight truncated to the next integer.
+func (h *Histogram) Count() int { return int(h.weight) }
+
 // Weight returns the observed weight (usually, the number of items seen).
 func (h *Histogram) Weight() float64 { return h.weight }
 
@@ -156,6 +159,9 @@ func (h *Histogram) Quantile(q float64) float64 {
 
 // Add is the same as AddWeight(v, 1)
 func (h *Histogram) Add(v float64) { h.AddWeight(v, 1) }
+
+// AddN is the same as AddWeight(v, float64(n))
+func (h *Histogram) AddN(v float64, n int) { h.AddWeight(v, float64(n)) }
 
 // AddWeight adds observations of v with the weight w to the distribution.
 func (h *Histogram) AddWeight(v, w float64) {

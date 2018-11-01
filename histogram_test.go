@@ -75,6 +75,11 @@ var _ = Describe("Histogram", func() {
 		Expect(std.Mean()).To(BeNumerically("~", 33.27, 0.01))
 	})
 
+	It("should calc count", func() {
+		Expect(blnk.Count()).To(Equal(0))
+		Expect(std.Count()).To(Equal(11))
+	})
+
 	It("should calc weight", func() {
 		Expect(blnk.Weight()).To(Equal(0.0))
 		Expect(std.Weight()).To(Equal(11.0))
