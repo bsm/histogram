@@ -139,6 +139,26 @@ var _ = Describe("Histogram", func() {
 		}))
 	})
 
+	It("should return bin count and data", func() {
+		Expect(subject.NumBins()).To(Equal(4))
+
+		v, w := subject.Bin(0)
+		Expect(v).To(BeNumerically("==", 6.5))
+		Expect(w).To(BeNumerically("==", -2))
+
+		v, w = subject.Bin(1)
+		Expect(v).To(BeNumerically("==", 15))
+		Expect(w).To(BeNumerically("==", 1))
+
+		v, w = subject.Bin(2)
+		Expect(v).To(BeNumerically("==", 39))
+		Expect(w).To(BeNumerically("==", -4))
+
+		v, w = subject.Bin(3)
+		Expect(v).To(BeNumerically("==", 45.5))
+		Expect(w).To(BeNumerically("==", -4))
+	})
+
 })
 
 // --------------------------------------------------------------------

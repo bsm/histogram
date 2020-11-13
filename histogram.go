@@ -192,6 +192,16 @@ func (h *Histogram) Merge(x, y *Histogram) {
 // MergeWith sets h to the union h ∪ x.
 func (h *Histogram) MergeWith(x *Histogram) { h.Merge(h, x) }
 
+// NumBins returns bin (bucket) count.
+func (h *Histogram) NumBins() int { return len(h.bins) }
+
+// Bin returns bin (bucket) data.
+// Requested index must be 0 <= i < NumBins() or it will panic.
+func (h *Histogram) Bin(i int) (value, weight float64) {
+	b := h.bins[i]
+	return b.v, b.w
+}
+
 func (h *Histogram) solve(b1, b2 bin, delta float64) float64 {
 	w1, w2 := b1.w, b2.w
 
