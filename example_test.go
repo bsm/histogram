@@ -3,7 +3,7 @@ package histogram_test
 import (
 	"fmt"
 
-	"github.com/bsm/histogram"
+	"github.com/bsm/histogram/v2"
 )
 
 func ExampleHistogram() {

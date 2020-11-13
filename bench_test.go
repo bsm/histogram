@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/bsm/histogram"
+	"github.com/bsm/histogram/v2"
 )
 
 func BenchmarkHistogram_Add(b *testing.B) {
