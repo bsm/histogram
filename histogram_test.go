@@ -6,9 +6,9 @@ import (
 	"sort"
 	"testing"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
+	. "github.com/bsm/ginkgo"
+	. "github.com/bsm/ginkgo/extensions/table"
+	. "github.com/bsm/gomega"
 )
 
 var _ = Describe("Histogram", func() {
@@ -36,28 +36,39 @@ var _ = Describe("Histogram", func() {
 	// inspired by https://github.com/aaw/histosketch/commit/d8284aa#diff-11101c92fbb1d58ccf30ca49764bf202R180
 	// released into the public domain
 	It("should accurately predict quantile", func() {
-		N := 10000
-		Q := []float64{0.0001, 0.001, 0.01, 0.1, 0.25, 0.35, 0.65, 0.75, 0.9, 0.99, 0.999, 0.9999}
+		N := 20_000
+		Q1 := []float64{0.001, 0.01, 0.1, 0.25, 0.35, 0.65, 0.75, 0.9, 0.99, 0.999}
+		Q2 := []float64{0.0001, 0.9999}
 
-		for seed := 0; seed < 10; seed++ {
-			r := rand.New(rand.NewSource(int64(seed)))
-			s := New(16)            // sketch
+		for seed := int64(0); seed < 16; seed++ {
+			r := rand.New(rand.NewSource(seed))
+			h := New(100)           // histogram
 			x := make([]float64, N) // exact
 
 			for i := 0; i < N; i++ {
-				num := r.NormFloat64()
-				s.Add(num)
+				num := r.NormFloat64() * 1
+				h.Add(num)
 				x[i] = num
 			}
 			sort.Float64s(x)
 
-			for _, q := range Q {
-				sQ := s.Quantile(q)
+			for _, q := range Q1 {
+				tQ := h.Quantile(q)
 				xQ := x[int(float64(len(x))*q)]
-				re := math.Abs((sQ - xQ) / xQ)
+				re := math.Abs((tQ - xQ) / xQ)
 
-				Expect(re).To(BeNumerically("<", 0.09),
-					"s.Quantile(%v) (got %.3f, want %.3f with seed = %v)", q, sQ, xQ, seed,
+				Expect(re).To(BeNumerically("<", 0.02), // allow ±2%
+					"s.Quantile(%v) (got %.3f, want %.3f with seed = %v)", q, tQ, xQ, seed,
+				)
+			}
+
+			for _, q := range Q2 {
+				tQ := h.Quantile(q)
+				xQ := x[int(float64(len(x))*q)]
+				re := math.Abs((tQ - xQ) / xQ)
+
+				Expect(re).To(BeNumerically("<", 0.1), // allow ±10%
+					"s.Quantile(%v) (got %.3f, want %.3f with seed = %v)", q, tQ, xQ, seed,
 				)
 			}
 		}
