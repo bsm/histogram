@@ -1,7 +1,0 @@
-language: go
-go:
-  - 1.15.x
-  - 1.14.x
-cache:
-  directories:
-    - $GOPATH/pkg/mod
