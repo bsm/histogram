@@ -11,32 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.16.x]
+        go-version: [1.17.x, 1.18.x]
     steps:
-      - name: Fetch staticcheck
-        uses: engineerd/configurator@v0.0.6
-        with:
-          name: staticcheck
-          fromGitHubReleases: true
-          repo: dominikh/go-tools
-          version: latest
-          urlTemplate: "https://github.com/dominikh/go-tools/releases/download/2021.1/staticcheck_linux_amd64.tar.gz"
-          pathInArchive: staticcheck/staticcheck
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Setup Go
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go-version }}
-      - name: Run tests
-        run: make test
-      - name: Run staticcheck
-        run: make staticcheck
+          cache: true
+      - run: make test
+  golangci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
